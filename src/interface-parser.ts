@@ -79,8 +79,8 @@ export class InterfaceParser {
       const line = field.replace(/\/\/.*$/, '').trim();
       if (!line) continue;
       // 支持可选、数组、联合类型、对象类型等
-      // 字段名可以包含下划线，类型可以包含泛型、数组、联合、对象等
-      const match = line.match(/^(\w+)\s*(\?)?\s*:\s*([\s\S]+)$/);
+      // 字段名可以包含驼峰命名法，类型可以包含泛型、数组、联合、对象等
+      const match = line.match(/^([a-zA-Z][a-zA-Z0-9]*)\s*(\?)?\s*:\s*([\s\S]+)$/);
       if (!match) continue;
       const [, name, optional, typeDef] = match;
       const isOptional = !!optional;
@@ -118,7 +118,7 @@ export class InterfaceParser {
    */
   private parseProperty(line: string): PropertyType | null {
     // 匹配属性定义: name: type
-    const match = line.match(/^(\w+)\s*(\?)?\s*:\s*(.+)$/);
+    const match = line.match(/^([a-zA-Z][a-zA-Z0-9]*)\s*(\?)?\s*:\s*(.+)$/);
     if (!match) return null;
     
     const [, name, optional, typeDef] = match;
