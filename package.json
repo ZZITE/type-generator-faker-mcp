@@ -1,6 +1,6 @@
 {
   "name": "type-generator-faker-mcp",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "MCP服务器，基于TypeScript interface使用faker.js生成mock数据",
   "main": "dist/lib.js",
   "bin": {
@@ -13,7 +13,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc && chmod +x dist/index.js",
+    "build": "tsc && chmod +x dist/index.js dist/cli.js",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
     "test": "jest",
@@ -31,11 +31,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/mcp-fake-generator.git"
+    "url": "git+https://github.com/ZZITE/type-generator-faker-mcp.git"
   },
-  "homepage": "https://github.com/yourusername/mcp-fake-generator#readme",
+  "homepage": "https://github.com/ZZITE/type-generator-faker-mcp#readme",
   "bugs": {
-    "url": "https://github.com/yourusername/mcp-fake-generator/issues"
+    "url": "https://github.com/ZZITE/type-generator-faker-mcp/issues"
   },
   "dependencies": {
     "@faker-js/faker": "^8.0.0",
