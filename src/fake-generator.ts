@@ -151,12 +151,31 @@ ${propertiesString}
    */
   private getFakeMethodForProperty(property: PropertyType): string {
     if (property.isArray) {
-      const baseMethod = this.getBaseFakeMethod(property);
-      return `faker.helpers.arrayElements([${baseMethod}], faker.number.int({ min: 1, max: 5 }))`;
+      if (property.objectProperties && property.objectProperties.length > 0) {
+        // 对象数组，递归生成对象mock
+        const objectFake = this.generateObjectFakeMethod(property.objectProperties);
+        return `Array.from({length: faker.number.int({ min: 1, max: 5 })}, () => ${objectFake})`;
+      } else {
+        // 基础类型数组
+        const baseMethod = this.getBaseFakeMethod(property);
+        return `Array.from({length: faker.number.int({ min: 1, max: 5 })}, () => ${baseMethod})`;
+      }
     }
     
     if (property.isUnion) {
-      const unionMethods = property.unionTypes.map(type => this.getFakeMethodForType(type, property.name));
+      const unionMethods = property.unionTypes.map(type => {
+        // 检查联合类型中的对象类型
+        if (type.startsWith('{') && type.endsWith('}')) {
+          // 如果是对象类型，递归解析并生成对象mock
+          const objectProperties = this.parseObjectProperties(type);
+          return this.generateObjectFakeMethod(objectProperties);
+        }
+        // 检查是否是枚举值（带引号的字符串）
+        if (type.startsWith("'") && type.endsWith("'")) {
+          return `'${type.slice(1, -1)}'`;
+        }
+        return this.getFakeMethodForType(type, property.name);
+      });
       return `faker.helpers.arrayElement([${unionMethods.join(', ')}])`;
     }
     
@@ -343,5 +362,44 @@ ${propertiesString}
     
     // 默认返回字符串
     return `Sample ${Math.random().toString(36).substring(7)}`;
+  }
+
+  /**
+   * 解析对象属性（用于联合类型中的对象）
+   */
+  private parseObjectProperties(objectType: string): PropertyType[] {
+    // 简单的对象属性解析，用于联合类型中的对象
+    const content = objectType.slice(1, -1);
+    const properties: PropertyType[] = [];
+    
+    const lines = content.split(';').map(line => line.trim()).filter(line => line.length > 0);
+    
+    for (const line of lines) {
+      const match = line.match(/^(\w+)\s*(\?)?\s*:\s*(.+)$/);
+      if (match) {
+        const [, name, optional, typeDef] = match;
+        const isOptional = !!optional;
+        const cleanTypeDef = typeDef.trim();
+        
+        // 简单的类型解析
+        const isArray = cleanTypeDef.endsWith('[]');
+        const baseType = isArray ? cleanTypeDef.slice(0, -2) : cleanTypeDef;
+        
+        properties.push({
+          name,
+          isOptional,
+          type: baseType,
+          isArray,
+          isUnion: false,
+          unionTypes: [],
+          isObject: false,
+          objectProperties: [],
+          isEnum: false,
+          enumValues: [],
+        });
+      }
+    }
+    
+    return properties;
   }
 } 

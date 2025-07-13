@@ -71,11 +71,8 @@ export class InterfaceParser {
    */
   private parseProperties(propertiesText: string): PropertyType[] {
     const properties: PropertyType[] = [];
-    // 用分号分割字段，支持一行多个字段、结尾有分号、字段后有注释
-    const fields = propertiesText
-      .split(';')
-      .map(f => f.trim())
-      .filter(f => f.length > 0);
+    // 用分号分割字段，支持嵌套对象整体提取
+    const fields = this.smartSplitFields(propertiesText);
 
     for (const field of fields) {
       // 移除行内注释
@@ -92,6 +89,28 @@ export class InterfaceParser {
       properties.push({ name, isOptional, ...typeInfo });
     }
     return properties;
+  }
+
+  /**
+   * 智能分割字段，支持嵌套对象整体提取
+   */
+  private smartSplitFields(text: string): string[] {
+    const fields: string[] = [];
+    let current = '';
+    let depth = 0;
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (char === '{') depth++;
+      if (char === '}') depth--;
+      if (char === ';' && depth === 0) {
+        fields.push(current);
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    if (current.trim()) fields.push(current);
+    return fields.map(f => f.trim()).filter(f => f.length > 0);
   }
 
   /**
@@ -123,37 +142,56 @@ export class InterfaceParser {
     // 检查是否为数组类型
     const isArray = typeDef.endsWith('[]') || typeDef.includes('Array<');
     let baseType = typeDef;
-    
+    let objectProperties: PropertyType[] = [];
+
+    // 新增：辅助函数，提取Array<...>的完整内容，支持多行和嵌套
+    function extractGenericContent(str: string, start: number): { content: string, end: number } {
+      let depth = 0;
+      let i = start;
+      let content = '';
+      for (; i < str.length; i++) {
+        if (str[i] === '<') {
+          depth++;
+          if (depth === 1) continue; // 跳过第一个 <
+        } else if (str[i] === '>') {
+          if (depth === 1) break;
+          depth--;
+        }
+        if (depth >= 1) content += str[i];
+      }
+      return { content, end: i };
+    }
+
     if (isArray) {
       if (typeDef.endsWith('[]')) {
-        baseType = typeDef.slice(0, -2);
-      } else {
-        const arrayMatch = typeDef.match(/Array<(.+)>/);
-        baseType = arrayMatch ? arrayMatch[1] : typeDef;
+        baseType = typeDef.slice(0, -2).trim();
+      } else if (typeDef.includes('Array<')) {
+        // 用括号计数法提取Array<...>内容
+        const arrayStart = typeDef.indexOf('Array<') + 5; // 指向 < 字符
+        const { content, end } = extractGenericContent(typeDef, arrayStart);
+        baseType = content.trim();
+      }
+      // 如果数组元素是对象，递归解析对象属性
+      if (baseType.startsWith('{') && baseType.endsWith('}')) {
+        objectProperties = this.parseProperties(baseType.slice(1, -1));
+        // type字段保留为对象结构，但不要重复大括号
+        baseType = baseType;
       }
     }
-    
     // 检查是否为联合类型
     const isUnion = baseType.includes('|');
     let unionTypes: string[] = [];
-    
     if (isUnion) {
       unionTypes = baseType.split('|').map(t => t.trim().replace(/['"]/g, ''));
     }
-    
     // 检查是否为对象类型
     const isObject = baseType.startsWith('{') && baseType.endsWith('}');
-    let objectProperties: PropertyType[] = [];
-    
-    if (isObject) {
-      const objectContent = baseType.slice(1, -1);
-      objectProperties = this.parseProperties(objectContent);
+    if (isObject && !isArray) {
+      objectProperties = this.parseProperties(baseType.slice(1, -1));
     }
-    
     // 检查是否为枚举类型
     const isEnum = baseType.includes('enum');
     let enumValues: string[] = [];
-    
     if (isEnum) {
       // 简单的枚举值提取，实际项目中可能需要更复杂的解析
       const enumMatch = baseType.match(/enum\s*\{([^}]+)\}/);
@@ -161,7 +199,6 @@ export class InterfaceParser {
         enumValues = enumMatch[1].split(',').map(v => v.trim().replace(/['"]/g, ''));
       }
     }
-    
     return {
       type: baseType,
       isArray,
