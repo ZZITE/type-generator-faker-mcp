@@ -4,7 +4,7 @@
   "description": "MCP服务器，基于TypeScript interface使用faker.js生成mock数据",
   "main": "dist/lib.js",
   "bin": {
-    "type-generator-faker-mcp": "dist/cli.js"
+    "type-generator-faker-mcp": "dist/index.js"
   },
   "type": "module",
   "files": [
