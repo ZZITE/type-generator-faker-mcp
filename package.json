@@ -1,6 +1,6 @@
 {
   "name": "type-generator-faker-mcp",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "MCP服务器，基于TypeScript interface使用faker.js生成mock数据",
   "main": "dist/lib.js",
   "bin": {
