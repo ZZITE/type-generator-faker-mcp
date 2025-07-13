@@ -1,0 +1,28 @@
+# 源代码
+src/
+examples/
+
+# 开发文件
+.git/
+.gitignore
+tsconfig.json
+jest.config.js
+
+# 开发依赖
+node_modules/
+
+# 构建文件（除了dist）
+*.ts
+*.tsx
+
+# 测试文件
+__tests__/
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+
+# 开发工具配置
+.vscode/
+.idea/
+*.log 
