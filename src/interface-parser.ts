@@ -1,6 +1,6 @@
 /**
- * TypeScript Interface 解析器
- * 解析TypeScript interface定义并提取类型信息
+ * TypeScript Interface/Type 解析器
+ * 解析TypeScript interface或type定义并提取类型信息
  */
 
 export interface PropertyType {
@@ -23,26 +23,35 @@ export interface ParsedInterface {
 
 export class InterfaceParser {
   /**
-   * 解析TypeScript interface定义
-   * @param interfaceDef interface定义字符串
+   * 解析TypeScript interface或type定义
+   * @param typeDef interface或type定义字符串
    * @returns 解析后的interface信息
    */
-  parse(interfaceDef: string): ParsedInterface {
+  parse(typeDef: string): ParsedInterface {
     // 清理输入，移除注释和多余空格
-    const cleaned = this.cleanInterfaceDefinition(interfaceDef);
+    const cleaned = this.cleanTypeDefinition(typeDef);
     
-    // 提取interface名称
-    const nameMatch = cleaned.match(/interface\s+(\w+)/);
-    if (!nameMatch) {
-      throw new Error('无法找到interface名称');
+    // 提取interface或type名称
+    // 支持以下语法：
+    // 1. interface User { ... }
+    // 2. type User = { ... }
+    // 3. type User = interface { ... }
+    const interfaceMatch = cleaned.match(/interface\s+(\w+)/);
+    const typeMatch = cleaned.match(/type\s+(\w+)\s*=\s*(?:interface\s*)?\{/);
+    
+    let name: string;
+    if (interfaceMatch) {
+      name = interfaceMatch[1];
+    } else if (typeMatch) {
+      name = typeMatch[1];
+    } else {
+      throw new Error('无法找到interface或type名称，请确保使用正确的语法：interface User { ... } 或 type User = { ... }');
     }
-    
-    const name = nameMatch[1];
     
     // 提取属性定义
     const propertiesMatch = cleaned.match(/\{([\s\S]*)\}/);
     if (!propertiesMatch) {
-      throw new Error('无法找到interface属性定义');
+      throw new Error('无法找到属性定义');
     }
     
     const propertiesText = propertiesMatch[1];
@@ -55,9 +64,9 @@ export class InterfaceParser {
   }
 
   /**
-   * 清理interface定义字符串
+   * 清理type定义字符串
    */
-  private cleanInterfaceDefinition(def: string): string {
+  private cleanTypeDefinition(def: string): string {
     return def
       .replace(/\/\*[\s\S]*?\*\//g, '') // 移除多行注释
       .replace(/\/\/.*$/gm, '') // 移除单行注释

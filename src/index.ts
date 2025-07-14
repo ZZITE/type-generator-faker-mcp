@@ -23,7 +23,7 @@ class MCPFakeGeneratorServer {
     this.server = new Server(
       {
         name: 'mcp-fake-generator',
-        version: '1.0.11',
+        version: '1.0.13',
       }
     );
 

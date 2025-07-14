@@ -4,13 +4,11 @@
 
 ## 🚀 功能特性
 
-- 🎯 **智能解析**：自动解析TypeScript interface定义，提取类型信息
-- 🎲 **智能生成**：使用faker.js生成符合类型的mock数据
-- 🔧 **类型支持**：支持string、number、boolean、Date、数组、联合类型、对象类型等
-- 📦 **多种使用方式**：支持MCP服务器、命令行工具、库三种使用方式
-- 🚀 **MCP集成**：作为MCP服务器运行，支持工具调用
-- 🛠️ **CLI工具**：提供命令行接口，方便批量生成
-- 📝 **代码生成**：生成可复用的TypeScript mock函数
+- ✅ **支持TypeScript interface和type别名**：解析interface和type定义
+- ✅ **智能类型推断**：根据属性名自动选择合适的faker.js方法
+- ✅ **复杂类型支持**：支持数组、联合类型、嵌套对象、可选属性
+- ✅ **多种使用方式**：MCP工具、命令行工具、库
+- ✅ **向后兼容**：保持对现有interface语法的完全支持
 
 ## 📦 安装
 
@@ -67,13 +65,61 @@ npm start
    - 使用tsx运行TypeScript源码
    - 适合开发者调试
 
-## 📖 使用方法
+## �� 使用方法
 
-### 1. 作为MCP服务器使用
+### 1. 作为MCP工具使用
 
-1. **配置MCP客户端**（如Claude Desktop）添加此服务器
-   - 在MCP客户端配置中添加服务器路径：`type-generator-faker-mcp`
-2. **使用工具** `generate_mock_data` 并提供TypeScript interface定义
+1. **安装工具** `mcp-fake-generator`
+2. **使用工具** `generate_mock_data` 并提供TypeScript interface或type定义
+
+#### 支持的语法：
+
+```typescript
+// 1. 传统interface语法
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  age: number;
+  isActive: boolean;
+  createdAt: Date;
+  tags: string[];
+  profile?: {
+    avatar: string;
+    bio: string;
+  };
+}
+
+// 2. type别名语法
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  age: number;
+  isActive: boolean;
+  createdAt: Date;
+  tags: string[];
+  profile?: {
+    avatar: string;
+    bio: string;
+  };
+}
+
+// 3. type别名使用interface语法
+type User = interface {
+  id: string;
+  name: string;
+  email: string;
+  age: number;
+  isActive: boolean;
+  createdAt: Date;
+  tags: string[];
+  profile?: {
+    avatar: string;
+    bio: string;
+  };
+}
+```
 
 #### 示例输入：
 
@@ -147,11 +193,14 @@ export function generateUserMock(count: number = 1): User | User[] {
 # 直接提供interface定义
 type-generator-faker-mcp -i "interface User { id: string; name: string; }" -c 3
 
-# 从文件读取interface定义
+# 使用type别名语法
+type-generator-faker-mcp -i "type User = { id: string; name: string; }" -c 3
+
+# 从文件读取interface或type定义
 type-generator-faker-mcp -f user-interface.ts -c 5 -o output.json
 
 # 生成单个数据
-type-generator-faker-mcp -i "interface Product { id: string; name: string; price: number; }"
+type-generator-faker-mcp -i "type Product = { id: string; name: string; price: number; }"
 
 # 查看帮助信息
 type-generator-faker-mcp --help
@@ -159,8 +208,8 @@ type-generator-faker-mcp --help
 
 #### 命令行参数：
 
-- `-i, --interface <interface>`: TypeScript接口字符串
-- `-f, --file <file>`: 包含TypeScript接口定义的文件路径
+- `-i, --interface <interface>`: TypeScript接口或type定义字符串
+- `-f, --file <file>`: 包含TypeScript接口或type定义的文件路径
 - `-c, --count <count>`: 生成数据条数，默认为1
 - `-o, --output <output>`: 输出文件路径（不指定则输出到控制台）
 - `-h, --help`: 显示帮助信息
@@ -210,6 +259,16 @@ interface User {
   email: string;
   age: number;
   isActive: boolean;
+}
+`);
+
+// 或者解析type别名
+const typeInfo2 = parser.parse(`
+type Product = {
+  id: string;
+  name: string;
+  price: number;
+  category: 'electronics' | 'clothing' | 'books';
 }
 `);
 
@@ -276,23 +335,23 @@ mcp-fake-generator/
 │   ├── index.ts              # MCP服务器主入口
 │   ├── cli.ts                # 命令行工具入口
 │   ├── fake-generator.ts     # faker.js生成器核心逻辑
-│   ├── interface-parser.ts   # TypeScript interface解析器
-│   └── __tests__/
-│       └── fake-generator.test.ts  # 单元测试
+│   ├── interface-parser.ts   # TypeScript interface/type解析器
+│   └── lib.ts                # 库导出文件
 ├── examples/
 │   ├── usage.js              # 使用示例
-│   └── user-interface.ts     # 示例interface定义
-├── package.json
-├── tsconfig.json
-├── jest.config.js
-└── README.md
+│   ├── user-interface.ts     # interface定义示例
+│   └── type-examples.ts      # type别名定义示例
+├── test-simple-mock.ts       # 简单mock测试
+├── test-complete-mock.ts     # 完整mock测试
+└── package.json              # 项目配置
 ```
 
 ## 🔧 核心组件
 
 ### 1. InterfaceParser
-- **功能**：解析TypeScript interface定义，提取类型信息
+- **功能**：解析TypeScript interface或type定义，提取类型信息
 - **支持**：基础类型、数组、联合类型、对象类型、可选属性
+- **语法支持**：interface语法、type别名语法
 - **特性**：智能类型推断，支持注释处理
 
 ### 2. FakeGenerator
@@ -302,8 +361,8 @@ mcp-fake-generator/
 
 ### 3. MCP Server
 - **功能**：提供工具调用接口，支持MCP协议
-- **工具**：`generate_mock_data` - 基于interface生成mock数据
-- **版本**：v1.0.6
+- **工具**：`generate_mock_data` - 基于interface或type生成mock数据
+- **版本**：v1.0.12
 
 ### 4. CLI Tool
 - **功能**：命令行工具，支持文件输入输出
@@ -348,6 +407,31 @@ interface Product {
       height: number;
     };
   };
+}
+```
+
+### type别名示例
+
+```typescript
+type Order = {
+  id: string;
+  userId: string;
+  products: Array<{
+    productId: string;
+    quantity: number;
+    price: number;
+  }>;
+  totalAmount: number;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  shippingAddress: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
+  createdAt: Date;
+  updatedAt: Date;
 }
 ```
 

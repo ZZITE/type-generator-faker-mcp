@@ -61,7 +61,8 @@ describe('FakeGenerator', () => {
       const parsedInterface = interfaceParser.parse(interfaceDef);
       const mockFunction = fakeGenerator.generateMockFunction(parsedInterface);
 
-      expect(mockFunction).toContain('faker.helpers.arrayElements');
+      expect(mockFunction).toContain('Array.from');
+      expect(mockFunction).toContain('faker.number.int');
     });
 
     it('应该处理联合类型', () => {

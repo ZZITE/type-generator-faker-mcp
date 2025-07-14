@@ -116,6 +116,9 @@ ${propertiesString}
       'country': 'string',
       'uuid': 'string',
       'id': 'string',
+      'time': 'string',
+      'timestamp': 'number',
+      'datetime': 'string',
     };
     
     // 检查是否匹配特定类型
@@ -227,6 +230,48 @@ ${propertiesString}
     // 先根据属性名匹配特定类型
     if (propertyName) {
       const nameLower = propertyName.toLowerCase();
+      
+      // 时间相关字段处理
+      if (nameLower === 'time' || nameLower.includes('time')) {
+        // 根据类型决定返回Date对象还是时间字符串
+        if (type.toLowerCase().includes('date') || type === 'Date') {
+          return 'faker.date.recent()';
+        } else {
+          // 返回ISO格式的时间字符串
+          return 'faker.date.recent().toISOString()';
+        }
+      }
+      
+      if (nameLower === 'timestamp' || nameLower.includes('timestamp')) {
+        // 时间戳通常是数字
+        if (type.toLowerCase().includes('number') || type === 'number') {
+          return 'faker.date.recent().getTime()';
+        } else {
+          // 字符串格式的时间戳
+          return 'faker.date.recent().toISOString()';
+        }
+      }
+      
+      if (nameLower === 'datetime' || nameLower.includes('datetime')) {
+        return 'faker.date.recent().toISOString()';
+      }
+      
+      if (nameLower === 'created' || nameLower.includes('created')) {
+        // 创建时间通常是过去的时间
+        return 'faker.date.past()';
+      }
+      
+      if (nameLower === 'updated' || nameLower.includes('updated')) {
+        // 更新时间可能是最近的时间
+        return 'faker.date.recent()';
+      }
+      
+      if (nameLower === 'birthday' || nameLower.includes('birthday') || nameLower.includes('birth')) {
+        // 生日通常是过去的时间
+        return 'faker.date.past({ years: 18 })';
+      }
+      
+      // 其他字段处理
       if (nameLower === 'id' || nameLower.includes('id')) {
         return 'faker.string.uuid()';
       }
